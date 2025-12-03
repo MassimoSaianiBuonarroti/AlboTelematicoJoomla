@@ -7,9 +7,6 @@ namespace AlboTelematico\Component\Albotelematico\Administrator\View\Atto;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Toolbar\ToolbarHelper;
 
-/**
- * View singolo atto (form di modifica)
- */
 class HtmlView extends BaseHtmlView
 {
     public $form;
@@ -18,11 +15,15 @@ class HtmlView extends BaseHtmlView
 
     public function display($tpl = null)
     {
+        // 👇 forza sempre il layout "edit"
+        $this->setLayout('edit');
+
         $this->form  = $this->get('Form');
         $this->item  = $this->get('Item');
         $this->state = $this->get('State');
 
-        if (count($errors = $this->get('Errors'))) {
+        $errors = $this->get('Errors');
+        if (!empty($errors)) {
             throw new \Exception(implode("\n", $errors), 500);
         }
 
@@ -35,16 +36,9 @@ class HtmlView extends BaseHtmlView
     {
         ToolbarHelper::title('Albo telematico - Atto', 'file');
 
-        // Applica = salva e resta nel form
         ToolbarHelper::apply('atto.apply');
-
-        // Salva = salva e torna alla lista
         ToolbarHelper::save('atto.save');
-
-        // Salva & nuovo (se ti può servire)
         ToolbarHelper::save2new('atto.save2new');
-
-        // Chiudi
         ToolbarHelper::cancel('atto.cancel', 'JTOOLBAR_CLOSE');
     }
 }

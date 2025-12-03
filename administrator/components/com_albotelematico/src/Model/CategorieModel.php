@@ -82,4 +82,45 @@ class CategorieModel extends ListModel
 
         return true;
     }
+
+        /**
+     * Pubblica / sospende le categorie selezionate.
+     *
+     * @param  array  $cid   ID delle categorie
+     * @param  int    $value 1 = pubblica, 0 = sospendi
+     * @return bool
+     */
+    public function publish(&$cid, $value)
+    {
+        $cid = (array) $cid;
+        $cid = array_filter(array_map('intval', $cid));
+
+        if (empty($cid)) {
+            $this->setError('Nessuna categoria selezionata.');
+            return false;
+        }
+
+        $value = (int) $value;
+
+        /** @var CategoriaTable $table */
+        $table = $this->getTable();
+
+        foreach ($cid as $pk) {
+            if (!$table->load($pk)) {
+                $this->setError($table->getError());
+                return false;
+            }
+
+            // la colonna si chiama "state"
+            $table->state = $value;
+
+            if (!$table->store()) {
+                $this->setError($table->getError());
+                return false;
+            }
+        }
+
+        return true;
+    }
+
 }

@@ -126,7 +126,13 @@ $categories = $db->loadObjectList();
                         <?php endif; ?>
                     </td>
                     <td><?php echo htmlspecialchars($item->document_number, ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><?php echo htmlspecialchars($item->albo_number, ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td>
+                        <?php echo (int) $item->albo_number; ?>
+                        <?php if (!empty($item->albo_year)) : ?>
+                            / <?php echo (int) $item->albo_year; ?>
+                        <?php endif; ?>
+                    </td>
+
                     <td>
                         <?php echo $item->document_date
                             ? HTMLHelper::_('date', $item->document_date, 'd-m-Y')

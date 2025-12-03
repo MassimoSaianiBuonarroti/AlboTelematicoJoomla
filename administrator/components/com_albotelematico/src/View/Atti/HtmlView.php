@@ -33,20 +33,30 @@ class HtmlView extends BaseHtmlView
         parent::display($tpl);
     }
 
-    protected function addToolbar(): void
-    {
-        ToolbarHelper::title('Albo telematico - Atti', 'stack');
+        protected function addToolbar(): void
+        {
+            ToolbarHelper::title('Albo telematico - Atti', 'stack');
 
-        // Pulsanti standard per gli atti
-        ToolbarHelper::addNew('atto.add');
-        ToolbarHelper::editList('atto.edit');
+            // Nuovo atto (usa AttoController)
+            ToolbarHelper::addNew('atto.add');
 
-        // 👉 Pulsante per andare alla gestione categorie
-        ToolbarHelper::link(
-            'index.php?option=com_albotelematico&view=categorie',
-            'Categorie',
-            'icon-folder'
-        );
-    }
+            // Modifica atto selezionato (usa AttoController)
+            ToolbarHelper::editList('atto.edit');
+
+            // Elimina atti selezionati (usa AttiController)
+            ToolbarHelper::deleteList(
+                'Sei sicuro di voler eliminare gli atti selezionati?',
+                'atti.delete'
+            );
+
+            // Vai alle categorie
+            \Joomla\CMS\Toolbar\ToolbarHelper::link(
+                'index.php?option=com_albotelematico&view=categorie',
+                'Categorie',
+                'icon-folder'
+            );
+        }
+
+
     
 }

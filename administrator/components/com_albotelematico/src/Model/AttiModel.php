@@ -5,7 +5,9 @@ namespace AlboTelematico\Component\Albotelematico\Administrator\Model;
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Filesystem\File;
 use Joomla\CMS\MVC\Model\ListModel;
+use AlboTelematico\Component\Albotelematico\Administrator\Table\AttoTable;
 
 class AttiModel extends ListModel
 {
@@ -21,7 +23,6 @@ class AttiModel extends ListModel
                 'publish_start', 'a.publish_start',
                 'publish_end', 'a.publish_end',
                 'category', 'a.category',
-                'category_title', 'c.title',
                 'state', 'a.state',
             ];
         }
@@ -29,11 +30,22 @@ class AttiModel extends ListModel
         parent::__construct($config);
     }
 
+    /**
+     * Tabella usata per i singoli atti
+     */
+    public function getTable($type = 'Atto', $prefix = 'AlboTelematico\\Component\\Albotelematico\\Administrator\\Table\\', $config = [])
+    {
+        return new AttoTable(Factory::getContainer()->get('DatabaseDriver'));
+    }
+
+    /**
+     * Stato (filtri, ordinamento)
+     */
     protected function populateState($ordering = 'a.document_date', $direction = 'DESC')
     {
         $app = Factory::getApplication();
 
-        // Filtro testo
+        // Filtro ricerca (titolo o numero documento)
         $search = $app->getUserStateFromRequest(
             $this->context . '.filter.search',
             'filter_search',
@@ -42,7 +54,7 @@ class AttiModel extends ListModel
         );
         $this->setState('filter.search', $search);
 
-        // Filtro categoria (ID)
+        // Filtro categoria
         $category = $app->getUserStateFromRequest(
             $this->context . '.filter.category',
             'filter_category',
@@ -54,6 +66,9 @@ class AttiModel extends ListModel
         parent::populateState($ordering, $direction);
     }
 
+    /**
+     * Query per la lista atti
+     */
     protected function getListQuery()
     {
         $db    = $this->getDbo();
@@ -66,22 +81,24 @@ class AttiModel extends ListModel
                     'a.title',
                     'a.document_number',
                     'a.albo_number',
+                    'a.albo_year',
                     'a.document_date',
                     'a.publish_start',
                     'a.publish_end',
                     'a.category',
                     'c.title AS category_title',
                     'a.state',
-                    'a.file', // 👈 IMPORTANTE
+                    'a.file',
                 ]
             )
             ->from($db->quoteName('#__albo_atti', 'a'))
-            ->join('LEFT', $db->quoteName('#__albo_categorie', 'c') . ' ON c.id = a.category');
+            ->join(
+                'LEFT',
+                $db->quoteName('#__albo_categorie', 'c') . ' ON ' . $db->quoteName('c.id') . ' = ' . $db->quoteName('a.category')
+            );
 
-
-        // --- Filtro testo ---
+        // Filtro ricerca
         $search = $this->getState('filter.search');
-
         if (!empty($search)) {
             $search = '%' . $db->escape($search, true) . '%';
             $conditions = [
@@ -91,9 +108,8 @@ class AttiModel extends ListModel
             $query->where('(' . implode(' OR ', $conditions) . ')');
         }
 
-        // --- Filtro categoria ---
-        $category = (int) $this->getState('filter.category');
-
+        // Filtro categoria
+        $category = (int) $this->getState('filter.category', 0);
         if ($category > 0) {
             $query->where($db->quoteName('a.category') . ' = ' . (int) $category);
         }
@@ -105,5 +121,61 @@ class AttiModel extends ListModel
         $query->order($db->escape($orderCol . ' ' . $orderDirn));
 
         return $query;
+    }
+
+    /**
+     * Eliminazione atti selezionati (usata da AdminController::delete)
+     * Cancella anche gli eventuali allegati PDF dal filesystem.
+     *
+     * @param  array  $cid  lista ID selezionati
+     * @return bool
+     */
+    public function delete(&$cid)
+    {
+        $cid = (array) $cid;
+        $cid = array_filter(array_map('intval', $cid));
+
+        if (empty($cid)) {
+            $this->setError('Nessun atto selezionato per l\'eliminazione.');
+            return false;
+        }
+
+        /** @var AttoTable $table */
+        $table = $this->getTable();
+
+        foreach ($cid as $pk) {
+            // Carichiamo il record per sapere quali allegati ha
+            if (!$table->load($pk)) {
+                $this->setError($table->getError());
+                return false;
+            }
+
+            // Cancella eventuali allegati (singolo path o JSON)
+            if (!empty($table->file)) {
+                $attachments = [];
+                $decoded     = json_decode($table->file, true);
+
+                if (is_array($decoded)) {
+                    $attachments = $decoded;
+                } else {
+                    $attachments = [$table->file];
+                }
+
+                foreach ($attachments as $path) {
+                    $fullPath = JPATH_ROOT . '/' . $path;
+                    if (File::exists($fullPath)) {
+                        File::delete($fullPath);
+                    }
+                }
+            }
+
+            // Cancella il record dalla tabella
+            if (!$table->delete($pk)) {
+                $this->setError($table->getError());
+                return false;
+            }
+        }
+
+        return true;
     }
 }

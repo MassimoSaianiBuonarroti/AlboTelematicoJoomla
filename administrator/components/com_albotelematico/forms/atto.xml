@@ -23,7 +23,14 @@
         <field
             name="albo_number"
             type="text"
-            label="Numero albo pretorio"
+            label="Numero albo"
+            readonly="true"
+        />
+
+        <field
+            name="albo_year"
+            type="text"
+            label="Anno albo"
             readonly="true"
         />
 
@@ -32,7 +39,10 @@
             type="calendar"
             label="Data documento"
             required="true"
-            format="%Y-%m-%d"
+            format="%d-%m-%Y"
+            translateformat="false"
+            showtime="false"
+            filter="USER_UTC"
         />
 
         <field
@@ -40,7 +50,10 @@
             type="calendar"
             label="Inizio pubblicazione"
             required="true"
-            format="%Y-%m-%d"
+            format="%d-%m-%Y"
+            translateformat="false"
+            showtime="false"
+            filter="USER_UTC"
         />
 
         <field
@@ -48,7 +61,10 @@
             type="calendar"
             label="Fine pubblicazione"
             required="true"
-            format="%Y-%m-%d"
+            format="%d-%m-%Y"
+            translateformat="false"
+            showtime="false"
+            filter="USER_UTC"
         />
 
         <field

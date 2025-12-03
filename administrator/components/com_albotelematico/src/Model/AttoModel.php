@@ -46,6 +46,35 @@ class AttoModel extends AdminModel
         return $data;
     }
 
+            /**
+         * Converte una data da d-m-Y a Y-m-d.
+         * Se è vuota o non valida, restituisce null.
+         * Se è già in Y-m-d la lascia così.
+         */
+        protected function normalizeDate(?string $value): ?string
+        {
+            $value = trim((string) $value);
+
+            if ($value === '') {
+                return null;
+            }
+
+            // Se è già in formato SQL (YYYY-mm-dd), la teniamo così
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+                return $value;
+            }
+
+            // Proviamo a interpretarla come d-m-Y
+            $dt = \DateTime::createFromFormat('d-m-Y', $value);
+
+            if ($dt instanceof \DateTime) {
+                return $dt->format('Y-m-d');
+            }
+
+            // Formato non riconosciuto
+            return null;
+        }
+
     /**
      * Salvataggio con gestione multipli allegati PDF (max 10, uno per volta)
      * + cancellazione allegati selezionati
@@ -163,6 +192,56 @@ class AttoModel extends AdminModel
             $data['file'] = '';
         }
 
+        // --- NORMALIZZAZIONE DATE (da d-m-Y a Y-m-d) ---
+
+        if (isset($data['document_date'])) {
+            $data['document_date'] = $this->normalizeDate($data['document_date']);
+        }
+
+        if (isset($data['publish_start'])) {
+            $data['publish_start'] = $this->normalizeDate($data['publish_start']);
+        }
+
+        if (isset($data['publish_end'])) {
+            $data['publish_end'] = $this->normalizeDate($data['publish_end']);
+        }
+
+        // --- FINE NORMALIZZAZIONE DATE ---
+
+        // --- NUMERAZIONE ALBO PRETORIO PER ANNO ---
+
+        // Se l'ID è vuoto → è un nuovo atto
+        $isNew = empty($data['id']);
+
+        // Se vuoi permettere di forzare manualmente il numero,
+        // puoi fare: if ($isNew && empty($data['albo_number'])) { ... }
+        if ($isNew) {
+            // Anno: prendiamo quello della data documento, se presente
+            if (!empty($data['document_date'])) {
+                // document_date è in formato YYYY-MM-DD
+                $year = (int) substr($data['document_date'], 0, 4);
+            } else {
+                // fallback: anno corrente
+                $year = (int) date('Y');
+            }
+
+            $db    = Factory::getContainer()->get('DatabaseDriver');
+            $query = $db->getQuery(true)
+                ->select('MAX(' . $db->quoteName('albo_number') . ')')
+                ->from($db->quoteName('#__albo_atti'))
+                ->where($db->quoteName('albo_year') . ' = ' . (int) $year);
+
+            $db->setQuery($query);
+            $maxNumber = (int) $db->loadResult();
+
+            $nextNumber = $maxNumber + 1;
+
+            // Impostiamo numero e anno
+            $data['albo_number'] = $nextNumber;
+            $data['albo_year']   = $year;
+        }
+
+        // --- FINE NUMERAZIONE ALBO ---
 
         // 6) Salvataggio standard dell'atto
         return parent::save($data);

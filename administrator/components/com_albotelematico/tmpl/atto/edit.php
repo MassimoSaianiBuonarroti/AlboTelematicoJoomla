@@ -40,6 +40,7 @@ if (!empty($item->id)) {
                 <?php echo $form->renderField('title'); ?>
                 <?php echo $form->renderField('document_number'); ?>
                 <?php echo $form->renderField('albo_number'); ?>
+                <?php echo $form->renderField('albo_year'); ?>
                 <?php echo $form->renderField('document_date'); ?>
                 <?php echo $form->renderField('publish_start'); ?>
                 <?php echo $form->renderField('publish_end'); ?>
