@@ -15,6 +15,11 @@ $state      = $this->state;
 // valori dei filtri correnti
 $filterSearch   = $state->get('filter.search');
 $filterCategory = (int) $state->get('filter.category');
+$filterYear     = (int) $state->get('filter.year');
+
+// ordinamento corrente
+$listOrder = $state->get('list.ordering', 'a.document_date');
+$listDirn  = $state->get('list.direction', 'DESC');
 
 // carichiamo le categorie per il filtro
 $db    = Factory::getContainer()->get('DatabaseDriver');
@@ -25,6 +30,15 @@ $query = $db->getQuery(true)
     ->order($db->quoteName('ordering') . ', ' . $db->quoteName('title'));
 $db->setQuery($query);
 $categories = $db->loadObjectList();
+
+// carichiamo gli anni disponibili (albo_year) per il filtro
+$queryYears = $db->getQuery(true)
+    ->select('DISTINCT ' . $db->quoteName('albo_year') . ' AS year')
+    ->from($db->quoteName('#__albo_atti'))
+    ->where($db->quoteName('albo_year') . ' > 0')
+    ->order($db->quoteName('albo_year') . ' DESC');
+$db->setQuery($queryYears);
+$years = $db->loadColumn();
 ?>
 
 <form action="<?php echo Route::_('index.php?option=com_albotelematico&view=atti'); ?>"
@@ -58,6 +72,19 @@ $categories = $db->loadObjectList();
             </div>
 
             <div>
+                <label for="filter_year">Anno</label><br>
+                <select name="filter_year" id="filter_year">
+                    <option value="0">- Tutti -</option>
+                    <?php foreach ($years as $year) : ?>
+                        <option value="<?php echo (int) $year; ?>"
+                            <?php echo $filterYear === (int) $year ? 'selected="selected"' : ''; ?>>
+                            <?php echo (int) $year; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div>
                 <button class="btn btn-primary" type="submit">Filtra</button>
                 <a class="btn btn-secondary"
                    href="<?php echo Route::_('index.php?option=com_albotelematico&view=atti'); ?>">
@@ -77,16 +104,37 @@ $categories = $db->loadObjectList();
                     <th width="1%">
                         <?php echo HTMLHelper::_('grid.checkall'); ?>
                     </th>
-                    <th>ID</th>
-                    <th>Nome atto</th>
+                    <th>
+                        <?php echo HTMLHelper::_('grid.sort', 'ID', 'a.id', $listDirn, $listOrder); ?>
+                    </th>
+                    <th>
+                        <?php echo HTMLHelper::_('grid.sort', 'Nome atto', 'a.title', $listDirn, $listOrder); ?>
+                    </th>
                     <th>Allegato</th>
-                    <th>N. documento</th>
-                    <th>N. albo</th>
-                    <th>Data documento</th>
-                    <th>Inizio pubb.</th>
-                    <th>Fine pubb.</th>
-                    <th>Categoria</th>
-                    <th>Stato</th>
+                    <th>
+                        <?php echo HTMLHelper::_('grid.sort', 'N. documento', 'a.document_number', $listDirn, $listOrder); ?>
+                    </th>
+                    <th>
+                        <?php echo HTMLHelper::_('grid.sort', 'N. albo', 'a.albo_number', $listDirn, $listOrder); ?>
+                    </th>
+                    <th>
+                        <?php echo HTMLHelper::_('grid.sort', 'Anno', 'a.albo_year', $listDirn, $listOrder); ?>
+                    </th>
+                    <th>
+                        <?php echo HTMLHelper::_('grid.sort', 'Data documento', 'a.document_date', $listDirn, $listOrder); ?>
+                    </th>
+                    <th>
+                        <?php echo HTMLHelper::_('grid.sort', 'Inizio pubb.', 'a.publish_start', $listDirn, $listOrder); ?>
+                    </th>
+                    <th>
+                        <?php echo HTMLHelper::_('grid.sort', 'Fine pubb.', 'a.publish_end', $listDirn, $listOrder); ?>
+                    </th>
+                    <th>
+                        <?php echo HTMLHelper::_('grid.sort', 'Categoria', 'c.title', $listDirn, $listOrder); ?>
+                    </th>
+                    <th>
+                        <?php echo HTMLHelper::_('grid.sort', 'Stato', 'a.state', $listDirn, $listOrder); ?>
+                    </th>
                 </tr>
             </thead>
             <tbody>
@@ -126,13 +174,8 @@ $categories = $db->loadObjectList();
                         <?php endif; ?>
                     </td>
                     <td><?php echo htmlspecialchars($item->document_number, ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td>
-                        <?php echo (int) $item->albo_number; ?>
-                        <?php if (!empty($item->albo_year)) : ?>
-                            / <?php echo (int) $item->albo_year; ?>
-                        <?php endif; ?>
-                    </td>
-
+                    <td><?php echo (int) $item->albo_number; ?></td>
+                    <td><?php echo (int) $item->albo_year; ?></td>
                     <td>
                         <?php echo $item->document_date
                             ? HTMLHelper::_('date', $item->document_date, 'd-m-Y')
@@ -164,6 +207,11 @@ $categories = $db->loadObjectList();
 
     <input type="hidden" name="task" value="" />
     <input type="hidden" name="boxchecked" value="0" />
+
+    <!-- campi nascosti per ordinamento -->
+    <input type="hidden" name="filter_order" value="<?php echo htmlspecialchars($listOrder, ENT_QUOTES, 'UTF-8'); ?>" />
+    <input type="hidden" name="filter_order_Dir" value="<?php echo htmlspecialchars($listDirn, ENT_QUOTES, 'UTF-8'); ?>" />
+
     <?php echo HTMLHelper::_('form.token'); ?>
 
 </form>

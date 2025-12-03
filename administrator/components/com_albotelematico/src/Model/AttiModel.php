@@ -19,6 +19,7 @@ class AttiModel extends ListModel
                 'title', 'a.title',
                 'document_number', 'a.document_number',
                 'albo_number', 'a.albo_number',
+                'albo_year', 'a.albo_year',   // 👈 aggiunto
                 'document_date', 'a.document_date',
                 'publish_start', 'a.publish_start',
                 'publish_end', 'a.publish_end',
@@ -62,6 +63,15 @@ class AttiModel extends ListModel
             'int'
         );
         $this->setState('filter.category', $category);
+
+        // 👇 filtro ANNO
+        $year = $app->getUserStateFromRequest(
+            $this->context . '.filter.year',
+            'filter_year',
+            0,
+            'int'
+        );
+        $this->setState('filter.year', $year);
 
         parent::populateState($ordering, $direction);
     }
@@ -112,6 +122,12 @@ class AttiModel extends ListModel
         $category = (int) $this->getState('filter.category', 0);
         if ($category > 0) {
             $query->where($db->quoteName('a.category') . ' = ' . (int) $category);
+        }
+
+        // Filtro ANNO (albo_year)
+        $year = (int) $this->getState('filter.year', 0);
+        if ($year > 0) {
+            $query->where($db->quoteName('a.albo_year') . ' = ' . (int) $year);
         }
 
         // Ordinamento
