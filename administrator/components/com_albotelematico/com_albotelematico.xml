@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="component" method="upgrade" version="5.0">
+    <name>COM_ALBOTELEMATICO</name>
+    <author>Saiani Massimo</author>
+    <creationDate>2026-06-17</creationDate>
+    <version>2.1.8</version>
+    <description>COM_ALBOTELEMATICO_XML_DESCRIPTION</description>
+    <namespace path="src">AlboTelematico\Component\Albotelematico</namespace>
+</extension>

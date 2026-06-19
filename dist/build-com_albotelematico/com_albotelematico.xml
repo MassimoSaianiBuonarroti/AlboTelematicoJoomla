@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="component" method="upgrade" version="5.0">
+    <name>COM_ALBOTELEMATICO</name>
+    <author>Saiani Massimo</author>
+    <creationDate>2026-06-17</creationDate>
+    <version>2.1.8</version>
+    <description>COM_ALBOTELEMATICO_XML_DESCRIPTION</description>
+    <namespace path="src">AlboTelematico\Component\Albotelematico</namespace>
+    <scriptfile>script.php</scriptfile>
+
+    <administration>
+        <menu link="index.php?option=com_albotelematico">COM_ALBOTELEMATICO</menu>
+
+        <files folder="administrator/components/com_albotelematico">
+            <filename>access.xml</filename>
+            <filename>albotelematico.php</filename>
+            <filename>com_albotelematico.xml</filename>
+            <filename>config.xml</filename>
+            <filename>script.php</filename>
+            <folder>forms</folder>
+            <folder>language</folder>
+            <folder>services</folder>
+            <folder>sql</folder>
+            <folder>src</folder>
+            <folder>tmpl</folder>
+        </files>
+
+        <languages folder="administrator/components/com_albotelematico/language">
+            <language tag="it-IT">it-IT/it-IT.com_albotelematico.ini</language>
+            <language tag="it-IT">it-IT/it-IT.com_albotelematico.sys.ini</language>
+        </languages>
+
+        <install>
+            <sql>
+                <file driver="mysql" charset="utf8mb4">sql/install.mysql.utf8.sql</file>
+            </sql>
+        </install>
+    </administration>
+</extension>
